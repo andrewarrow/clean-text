@@ -1,0 +1,96 @@
+#!/usr/bin/env python3
+"""CleanText for Linux — cleans clipboard text in place.
+
+Bind this script to a keyboard shortcut in your DE/WM settings.
+Requires: python3, xclip (X11) or wl-clipboard (Wayland).
+"""
+
+import re
+import subprocess
+import sys
+
+
+def get_clipboard():
+    """Read clipboard using whatever tool is available."""
+    for cmd in [["wl-paste"], ["xclip", "-selection", "clipboard", "-o"]]:
+        try:
+            return subprocess.run(cmd, capture_output=True, text=True, check=True).stdout
+        except FileNotFoundError:
+            continue
+    print("Install xclip or wl-clipboard", file=sys.stderr)
+    sys.exit(1)
+
+
+def set_clipboard(text):
+    """Write text to clipboard."""
+    for cmd in [["wl-copy"], ["xclip", "-selection", "clipboard"]]:
+        try:
+            subprocess.run(cmd, input=text, text=True, check=True)
+            return
+        except FileNotFoundError:
+            continue
+    print("Install xclip or wl-clipboard", file=sys.stderr)
+    sys.exit(1)
+
+
+def notify(msg):
+    """Best-effort desktop notification."""
+    try:
+        subprocess.run(["notify-send", "CleanText", msg], check=False)
+    except FileNotFoundError:
+        pass
+
+
+def is_list_item(line):
+    return (
+        line.startswith("- ")
+        or line.startswith("* ")
+        or bool(re.match(r"^\d+[.)\]] ", line))
+    )
+
+
+def clean_text(text):
+    text = text.replace("\r\n", "\n").replace("\r", "\n")
+
+    lines = []
+    for line in text.split("\n"):
+        line = line.strip()
+        if line.startswith("\u23fa"):  # ⏺
+            line = line[1:].lstrip()
+        lines.append(line)
+
+    # Group into paragraphs (split on blank lines)
+    paragraphs = [[]]
+    for line in lines:
+        if not line:
+            if paragraphs[-1]:
+                paragraphs.append([])
+        else:
+            paragraphs[-1].append(line)
+
+    result = []
+    for para in paragraphs:
+        if not para:
+            continue
+        out = []
+        buf = ""
+        for line in para:
+            if is_list_item(line):
+                if buf:
+                    out.append(buf)
+                    buf = ""
+                out.append(line)
+            else:
+                buf = line if not buf else buf + " " + line
+        if buf:
+            out.append(buf)
+        result.append("\n".join(out))
+
+    return "\n\n".join(result)
+
+
+if __name__ == "__main__":
+    text = get_clipboard()
+    cleaned = clean_text(text)
+    set_clipboard(cleaned)
+    notify("Clipboard cleaned")
