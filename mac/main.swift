@@ -80,9 +80,10 @@ func hotKeyCallback(
 
 // MARK: - App Delegate
 
-class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
+class AppDelegate: NSObject, NSApplicationDelegate {
     var statusItem: NSStatusItem!
     var hotKeyRef: EventHotKeyRef?
+    var menu: NSMenu!
 
     func applicationDidFinishLaunching(_: Notification) {
         setupStatusItem()
@@ -96,10 +97,12 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
                 systemSymbolName: "scissors",
                 accessibilityDescription: "Clean Text"
             )
+            button.action = #selector(statusItemClicked(_:))
+            button.target = self
+            button.sendAction(on: [.leftMouseUp, .rightMouseUp])
         }
 
-        let menu = NSMenu()
-        menu.delegate = self
+        menu = NSMenu()
 
         let quitItem = NSMenuItem(
             title: "Quit",
@@ -108,12 +111,17 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         )
         quitItem.target = self
         menu.addItem(quitItem)
-
-        statusItem.menu = menu
     }
 
-    func menuWillOpen(_ menu: NSMenu) {
-        performClean()
+    @objc func statusItemClicked(_ sender: NSStatusBarButton) {
+        guard let event = NSApp.currentEvent else { return }
+        if event.type == .rightMouseUp {
+            statusItem.menu = menu
+            statusItem.button?.performClick(nil)
+            statusItem.menu = nil
+        } else {
+            performClean()
+        }
     }
 
     func registerGlobalHotKey() {
