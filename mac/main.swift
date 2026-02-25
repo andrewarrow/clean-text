@@ -80,7 +80,7 @@ func hotKeyCallback(
 
 // MARK: - App Delegate
 
-class AppDelegate: NSObject, NSApplicationDelegate {
+class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
     var statusItem: NSStatusItem!
     var hotKeyRef: EventHotKeyRef?
 
@@ -99,16 +99,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         }
 
         let menu = NSMenu()
-
-        let cleanItem = NSMenuItem(
-            title: "Clean Clipboard  ⌃⌥C",
-            action: #selector(cleanClipboardAction),
-            keyEquivalent: ""
-        )
-        cleanItem.target = self
-        menu.addItem(cleanItem)
-
-        menu.addItem(NSMenuItem.separator())
+        menu.delegate = self
 
         let quitItem = NSMenuItem(
             title: "Quit",
@@ -119,6 +110,10 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         menu.addItem(quitItem)
 
         statusItem.menu = menu
+    }
+
+    func menuWillOpen(_ menu: NSMenu) {
+        performClean()
     }
 
     func registerGlobalHotKey() {
@@ -151,10 +146,6 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         )
     }
 
-    @objc func cleanClipboardAction() {
-        performClean()
-    }
-
     func performClean() {
         let pb = NSPasteboard.general
         guard let text = pb.string(forType: .string) else {
@@ -175,7 +166,6 @@ class AppDelegate: NSObject, NSApplicationDelegate {
             systemSymbolName: "checkmark.circle.fill",
             accessibilityDescription: "Done"
         )
-        NSSound(named: NSSound.Name("Tink"))?.play()
         DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
             button.image = original
         }
