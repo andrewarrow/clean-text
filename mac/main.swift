@@ -44,6 +44,8 @@ func cleanText(_ input: String) -> String {
                     buffer = ""
                 }
                 outputLines.append(line)
+            } else if !outputLines.isEmpty && isListItem(outputLines.last!) && buffer.isEmpty {
+                outputLines[outputLines.count - 1] += " " + line
             } else {
                 buffer = buffer.isEmpty ? line : buffer + " " + line
             }
