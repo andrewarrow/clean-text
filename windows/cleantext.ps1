@@ -48,6 +48,8 @@ function Invoke-CleanText($text) {
                     $buf = ''
                 }
                 $outLines += $line
+            } elseif ($outLines.Count -gt 0 -and (Test-ListItem $outLines[-1]) -and $buf -eq '') {
+                $outLines[$outLines.Count - 1] += " $line"
             } else {
                 $buf = if ($buf -eq '') { $line } else { "$buf $line" }
             }

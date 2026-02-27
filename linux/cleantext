@@ -80,6 +80,8 @@ def clean_text(text):
                     out.append(buf)
                     buf = ""
                 out.append(line)
+            elif out and is_list_item(out[-1]) and not buf:
+                out[-1] += " " + line
             else:
                 buf = line if not buf else buf + " " + line
         if buf:

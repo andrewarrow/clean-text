@@ -45,9 +45,22 @@ func cleanText(_ input: String) -> String {
                 }
                 outputLines.append(line)
             } else if !outputLines.isEmpty && isListItem(outputLines.last!) && buffer.isEmpty {
-                outputLines[outputLines.count - 1] += " " + line
+                var lastLine = outputLines[outputLines.count - 1]
+                if lastLine.hasSuffix("\\") {
+                    lastLine = String(lastLine.dropLast())
+                        .replacingOccurrences(of: "\\s+$", with: "", options: .regularExpression)
+                }
+                outputLines[outputLines.count - 1] = lastLine + " " + line
             } else {
-                buffer = buffer.isEmpty ? line : buffer + " " + line
+                if buffer.isEmpty {
+                    buffer = line
+                } else {
+                    if buffer.hasSuffix("\\") {
+                        buffer = String(buffer.dropLast())
+                            .replacingOccurrences(of: "\\s+$", with: "", options: .regularExpression)
+                    }
+                    buffer += " " + line
+                }
             }
         }
         if !buffer.isEmpty {
