@@ -99,8 +99,18 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     var menu: NSMenu!
 
     func applicationDidFinishLaunching(_: Notification) {
+        terminateExistingInstances()
         setupStatusItem()
         registerGlobalHotKey()
+    }
+
+    func terminateExistingInstances() {
+        let dominated = NSRunningApplication.runningApplications(
+            withBundleIdentifier: Bundle.main.bundleIdentifier ?? "com.cleantext.app"
+        )
+        for app in dominated where app != NSRunningApplication.current {
+            app.terminate()
+        }
     }
 
     func setupStatusItem() {
